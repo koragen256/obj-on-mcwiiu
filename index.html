@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<!-- saved from url=(0046)https://mcbeeringi.github.io/apps/mc/poly.html -->
+<html lang="en" dir="ltr">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <title>NBS Convertor</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.3/react.js"></script>
+<script src="nbs.js"></script>
+<script src="qrcode.js"></script>
+
+
+
+<body>
+    <style>
+         :root,
+        textarea,
+        input {
+            background-color: #222;
+            color: #fff;
+            font-family: menlo, monospace;
+        }
+        
+        .box {
+            background-color: #333;
+            padding: 4px;
+            font-size: 13px;
+        }
+        
+        a:link,
+        a:visited {
+            color: #aef;
+        }
+        
+        a:link:hover {
+            color: #8af;
+        }
+        
+        a:link:active {
+            color: #48f;
+        }
+        
+        h1,
+        h2 {
+            padding: 0rem 1rem;
+            border-left: 4px solid #000;
+        }
+        
+        textarea {
+            background-color: #0000;
+            line-height: 14px;
+            min-height: 92px;
+            max-height: 448px;
+            width: calc(100% - 8px);
+            overflow: scroll;
+            resize: vertical;
+        }
+        
+        #log {
+            line-height: 14px;
+            max-height: 448px;
+            overflow: scroll;
+            background-color: #333;
+        }
+        
+        input:not([type=radio]) {
+            background-color: #0000;
+            display: inline-block;
+            border: none;
+            border-bottom: 2px solid #888;
+            border-radius: 0;
+            min-width: 20em;
+            max-width: 100%;
+            outline: none;
+            transition: .2s;
+        }
+        
+        input:not([type=radio]):focus {
+            border-bottom-color: #48fc;
+        }
+        
+        .button {
+            background-color: #555;
+            padding: 80px;
+            border-radius: 40px;
+            user-select: none;
+            -webkit-user-select: none;
+            display: inline-block;
+        }
+        
+        .button:active {
+            background-color: #48fc;
+        }
+    </style>
+
+
+    <h1>NBS Convertor</h1>
+    <div class="box">
+        <h2>input</h2>
+        <br> .objをminecarft wiiuで使える形にします<br>
+        <br>
+        <input type="file" id="finp" onchange="butotnClick()" accept=".obj"><span id="finpl"></span>
+        <br>
+        <textarea name="resultt" id="" cols="30" rows="6" hidden=true></textarea>
+    </div>
+    <br>
+    <div class="box">
+        <h2>Setting</h2>
+        <br>
+        <button onclick="conv()">RUN convert</button>
+
+    </div>
+    <div id="qrcode"></div>
+</body>
+
+<script>
+    let data;
+    function butotnClick() {
+        console.log('value: ' + finp.value);
+        let file = finp.files[0];
+
+        console.log('name: ' + file.name);
+        console.log('size: ' + file.size);
+        console.log('type: ' + file.type);
+
+        const reader = new FileReader();
+        reader.readAsText(file);
+
+        reader.onload = function() {
+            console.log(reader.result);
+            alert("fin load!");
+
+            var infoarea = document.getElementsByName("resultt")[0];
+
+            infoarea.value = 'name: ' + file.name + "\n";
+            infoarea.value += 'size: ' + file.size + "\n";
+            infoarea.value += 'type: ' + file.type + "\n";
+
+            data = reader.result;
+        }
+
+    }
+
+    function conv(){
+        let vartexs = [];
+        for(let t of data.split("\n")){
+            if(t.split(" ")[0]=="v"){
+                var vals=t.split(" ");
+                vartexs.push(parseFloat(vals[1]));
+                vartexs.push(parseFloat(vals[2]));
+                vartexs.push(parseFloat(vals[3]));
+            }
+        }
+        console.log(vartexs);
+
+        let buffer = new ArrayBuffer(0x30 + vartexs.length*4);
+
+        let dv = new DataView(buffer);
+
+        for(let i=0;i<vartexs.length;i++){
+            dv.setFloat32(0x30+i*4,vartexs[i]);
+        }
+        dv.setInt32(0x0,vartexs.length/3);
+        savebuffer(dv, ".!modelW.bin")
+    }
+
+
+    function savebuffer(buffer, name) {
+        var a = document.createElement("a");
+        document.body.appendChild(a);
+        a.style = "display: none";
+        console.log(a);
+
+        var blob = new Blob([buffer], {
+                type: "octet/stream"
+            }),
+            url = window.URL.createObjectURL(blob);
+        console.log(url);
+
+        //データを保存する
+        a.href = url;
+        var fname = finp.files[0].name + name;
+        a.download = fname.replace(/\s+/g, '_');
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
+
+    function csv_array(data) {
+        const dataArray = []; //配列を用意
+        const dataString = data.split('\n'); //改行で分割
+        for (let i = 0; i < dataString.length; i++) { //あるだけループ
+            dataArray[i] = dataString[i].split(',');
+        }
+        console.log(dataArray);
+        return dataArray;
+
+    }
+
+</script>
+
+</html>
